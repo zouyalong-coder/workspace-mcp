@@ -1,0 +1,48 @@
+# workspace-mcp
+
+A small, safety-first local MCP server for one bounded code workspace.
+
+**Requires Python 3.10–3.13. Python 3.11 or 3.12 is recommended.** The MCP Python SDK does not support Python 3.9, and Python 3.14 is not enabled until the dependency stack is verified there.
+
+## Install and run
+
+Use `pipx` for the CLI application, or a dedicated virtual environment. Do not install into the macOS system/Homebrew environment:
+
+```bash
+brew install pipx python@3.11
+pipx ensurepath
+pipx install --python python3.11 ./workspace_mcp-0.3.2-py3-none-any.whl
+```
+
+Equivalent virtual-environment installation:
+
+```bash
+python3.11 -m venv ~/.venvs/workspace-mcp
+~/.venvs/workspace-mcp/bin/python -m pip install -U pip
+~/.venvs/workspace-mcp/bin/python -m pip install workspace_mcp-0.3.2-py3-none-any.whl
+cd /path/to/project
+~/.venvs/workspace-mcp/bin/workspace-mcp
+```
+
+The default transport is MCP stdio, so it should be launched by Codex or another MCP client. Running `workspace-mcp` directly in an interactive terminal prints a ready-to-run `codex mcp add` command for the current directory and exits instead of waiting indefinitely. For a manual local HTTP test:
+
+```bash
+workspace-mcp --transport streamable-http --port 8765 --max-port 8865
+```
+
+If the requested HTTP port is busy, the server selects the first available port in the configured range. It binds to `127.0.0.1` by default and rejects non-loopback hosts unless `--allow-network` is explicitly supplied. HTTP mode has no built-in authentication, so do not use `--allow-network` on an untrusted network.
+
+## Safety contract
+
+- The current directory is the only workspace root by default.
+- Absolute paths, `..` traversal, and symlink escapes are rejected.
+- File reads and writes are UTF-8 and size-limited.
+- Edits use a line-range replacement with a mandatory SHA-256 optimistic lock.
+- No arbitrary shell tool is exposed.
+- `git_diff` is read-only and runs only in the bounded workspace.
+
+The initial tool set is `workspace_root`, `list_files`, `read_file`, `search_text`, `replace_range`, and `git_diff`. Add a separately reviewed allowlisted `run_check` tool only if needed.
+
+## Platform note
+
+The package and CLI are cross-platform, but v0.3.2 file access intentionally fails closed unless Python exposes secure POSIX `dir_fd`, `O_NOFOLLOW`, atomic rename, and `flock` primitives. A native Windows handle-relative implementation is required before claiming cross-platform file access or editing support.

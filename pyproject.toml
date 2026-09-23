@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling>=1.27,<1.33"]
+build-backend = "hatchling.build"
+
+[project]
+name = "workspace-mcp"
+version = "0.3.2"
+description = "A safety-first local MCP server for one bounded code workspace"
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+dependencies = ["mcp>=1.26,<1.27"]
+
+[project.scripts]
+workspace-mcp = "workspace_mcp.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/workspace_mcp"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/workspace_mcp", "tests", "README.md", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
